@@ -179,19 +179,19 @@ onEvent(PuglView* view, const PuglEvent* event)
 		quit = 1;
 		break;
 	case PUGL_KEY_PRESS:
-		fprintf(stderr, "Key %u (char U+%04X special U+%04X) press (%s)%s\n",
-		        event->key.keycode, event->key.character, event->key.special,
-		        event->key.string, event->key.filter ? " (filtered)" : "");
-		if (event->key.character == 'q' ||
-		    event->key.character == 'Q' ||
-		    event->key.character == PUGL_CHAR_ESCAPE) {
+		fprintf(stderr, "Key press   code %3u key  U+%04X\n",
+		        event->key.keycode, event->key.key);
+		if (event->key.key == 'q' || event->key.key == PUGL_KEY_ESCAPE) {
 			quit = 1;
 		}
 		break;
 	case PUGL_KEY_RELEASE:
-		fprintf(stderr, "Key %u (char U+%04X special U+%04X) release (%s)%s\n",
-		        event->key.keycode, event->key.character, event->key.special,
-		        event->key.string, event->key.filter ? " (filtered)" : "");
+		fprintf(stderr, "Key release code %3u key  U+%04X\n",
+		        event->key.keycode, event->key.key);
+		break;
+	case PUGL_TEXT:
+		fprintf(stderr, "Text entry  code %3u char U+%04X (%s)\n",
+		        event->text.keycode, event->text.character, event->text.string);
 		break;
 	case PUGL_MOTION_NOTIFY:
 		xAngle = fmodf(xAngle - (float)(event->motion.x - lastMouseX), 360.0f);
