@@ -256,47 +256,50 @@ static int
 lookupString(XIC xic, XEvent* xevent, char* str, KeySym* sym)
 {
 	Status status = 0;
-	if (xevent->type == KeyRelease || XFilterEvent(xevent, None) || !xic) {
-		return XLookupString(&xevent->xkey, str, 7, sym, NULL);
-	}
 
 #ifdef X_HAVE_UTF8_STRING
-	return Xutf8LookupString(xic, &xevent->xkey, str, 7, sym, &status);
+	const int n = Xutf8LookupString(xic, &xevent->xkey, str, 7, sym, &status);
 #else
-	return XmbLookupString(xic, &xevent->xkey, str, 7, sym, &status);
+	const int n = XmbLookupString(xic, &xevent->xkey, str, 7, sym, &status);
 #endif
+
+	return status == XBufferOverflow ? 0 : n;
 }
 
 static void
 translateKey(PuglView* view, XEvent* xevent, PuglEvent* event)
 {
-	event->key.keycode = xevent->xkey.keycode;
+	const unsigned state  = xevent->xkey.state;
+	const bool     filter = XFilterEvent(xevent, None);
 
-	// Lookup shifted key
-	char          sstr[8] = {0};
+	event->key.keycode = xevent->xkey.keycode;
+	xevent->xkey.state = 0;
+
+	// Lookup unshifted key
 	char          ustr[8] = {0};
 	KeySym        sym     = 0;
-	const int     found   = lookupString(view->impl->xic, xevent, sstr, &sym);
+	const int     ufound  = XLookupString(&xevent->xkey, ustr, 8, &sym, NULL);
 	const PuglKey special = keySymToSpecial(sym);
 
-	if (special) {
-		event->key.key = special;
-	} else {
-		// Lookup unshifted key
-		xevent->xkey.state = 0;
-		if (lookupString(view->impl->xic, xevent, ustr, &sym) > 0) {
-			event->key.key = puglDecodeUTF8((const uint8_t*)ustr);
+	event->key.key = ((special || ufound <= 0)
+	                  ? special
+	                  : puglDecodeUTF8((const uint8_t*)ustr));
+
+	if (xevent->type == KeyPress && !filter && !special) {
+		// Lookup shifted key for possible text event
+		xevent->xkey.state = state;
+
+		char      sstr[8] = {0};
+		const int sfound  = lookupString(view->impl->xic, xevent, sstr, &sym);
+		if (sfound > 0) {
+			// Dispatch key event now
+			puglDispatchEvent(view, event);
+
+			// "Return" a text event in its place
+			event->text.type      = PUGL_TEXT;
+			event->text.character = puglDecodeUTF8((const uint8_t*)sstr);
+			memcpy(event->text.string, sstr, sizeof(sstr));
 		}
-	}
-
-	if (xevent->type == KeyPress && found > 0) {
-		// Dispatch key event now
-		puglDispatchEvent(view, event);
-
-		// "Return" a text event in its place
-		event->text.type      = PUGL_TEXT;
-		event->text.character = puglDecodeUTF8((const uint8_t*)sstr);
-		memcpy(event->text.string, sstr, sizeof(sstr));
 	}
 }
 
