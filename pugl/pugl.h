@@ -267,6 +267,8 @@ typedef struct {
 	double         y;      ///< New parent-relative Y coordinate
 	double         width;  ///< New width
 	double         height; ///< New height
+	double         xScale; ///< Horizontal scaling factor
+	double         yScale; ///< Vertical scaling factor
 } PuglEventConfigure;
 
 /**

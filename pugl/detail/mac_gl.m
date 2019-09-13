@@ -71,6 +71,8 @@ typedef NSUInteger NSWindowStyleMask;
 		self = [super initWithFrame:frame];
 	}
 
+	[self setWantsBestResolutionOpenGLSurface:YES];
+
 	if (self) {
 		[[self openGLContext] makeCurrentContext];
 		[self reshape];

@@ -105,16 +105,22 @@ updateViewRect(PuglView* view)
 
 - (void) dispatchExpose:(NSRect)rect
 {
+	const NSRect br     = [puglview->impl->drawView convertRectToBacking:rect];
+	const double xScale = br.size.width / rect.size.width;
+	const double yScale = br.size.height / rect.size.height;
+
 	if (reshaped) {
 		updateViewRect(puglview);
 
-		const PuglEventConfigure ev =  {
+		const PuglEventConfigure ev = {
 			PUGL_CONFIGURE,
 			0,
-			puglview->frame.x,
-			puglview->frame.y,
-			puglview->frame.width,
-			puglview->frame.height,
+			puglview->frame.x * xScale,
+			puglview->frame.y * yScale,
+			puglview->frame.width * xScale,
+			puglview->frame.height * yScale,
+			xScale,
+			yScale,
 		};
 
 		puglDispatchEvent(puglview, (const PuglEvent*)&ev);
@@ -124,10 +130,10 @@ updateViewRect(PuglView* view)
 	const PuglEventExpose ev = {
 		PUGL_EXPOSE,
 		0,
-		rect.origin.x,
-		rect.origin.y,
-		rect.size.width,
-		rect.size.height,
+		rect.origin.x * xScale,
+		rect.origin.y * yScale,
+		rect.size.width * xScale,
+		rect.size.height * yScale,
 		0
 	};
 
