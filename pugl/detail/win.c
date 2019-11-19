@@ -1,5 +1,5 @@
 /*
-  Copyright 2012-2019 David Robillard <http://drobilla.net>
+  Copyright 2012-2020 David Robillard <http://drobilla.net>
 
   Permission to use, copy, modify, and/or distribute this software for any
   purpose with or without fee is hereby granted, provided that the above
@@ -101,6 +101,12 @@ puglRegisterWindowClass(const char* name)
 	wc.lpszClassName = name;
 
 	return RegisterClassEx(&wc);
+}
+
+PuglStatus
+puglInitApplication(PuglApplicationFlags PUGL_UNUSED(flags))
+{
+	return PUGL_SUCCESS;
 }
 
 PuglWorldInternals*

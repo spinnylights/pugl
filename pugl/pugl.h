@@ -1,5 +1,5 @@
 /*
-  Copyright 2012-2019 David Robillard <http://drobilla.net>
+  Copyright 2012-2020 David Robillard <http://drobilla.net>
 
   Permission to use, copy, modify, and/or distribute this software for any
   purpose with or without fee is hereby granted, provided that the above
@@ -420,6 +420,36 @@ typedef union {
 } PuglEvent;
 
 /**
+   @name Global
+   Support for top-level applications.
+   @{
+*/
+
+typedef enum {
+	/**
+	   Initialise threads.  This calls XInitThreads() on X11, which is
+	   required by some drivers, particularly with Vulkan.
+	*/
+	PUGL_APPLICATION_THREADS = 1,
+} PuglApplicationFlag;
+
+/**
+   Bitwise OR of PuglApplicationFlag values.
+*/
+typedef uint32_t PuglApplicationFlags;
+
+/**
+   Initialise an application.
+
+   This must be called only once by a program, and before any other pugl
+   functions are called (including creating the world).  This is only to be
+   used by "top-level" applications at the start of main(), not in libraries or
+   plugins.
+*/
+PUGL_API PuglStatus
+puglInitApplication(PuglApplicationFlags flags);
+
+/**
    Return a string describing a status code.
 */
 PUGL_API
@@ -427,6 +457,7 @@ const char*
 puglStrerror(PuglStatus status);
 
 /**
+   @}
    @anchor world
    @name World
    The top level context of a Pugl application.

@@ -1,5 +1,5 @@
 /*
-  Copyright 2012-2019 David Robillard <http://drobilla.net>
+  Copyright 2012-2020 David Robillard <http://drobilla.net>
   Copyright 2013 Robin Gareus <robin@gareus.org>
   Copyright 2011-2012 Ben Loftis, Harrison Consoles
 
@@ -64,6 +64,16 @@ static const long eventMask =
 	 VisibilityChangeMask | FocusChangeMask |
 	 EnterWindowMask | LeaveWindowMask | PointerMotionMask |
 	 ButtonPressMask | ButtonReleaseMask | KeyPressMask | KeyReleaseMask);
+
+PuglStatus
+puglInitApplication(const PuglApplicationFlags flags)
+{
+	if (flags & PUGL_APPLICATION_THREADS) {
+		XInitThreads();
+	}
+
+	return PUGL_SUCCESS;
+}
 
 PuglWorldInternals*
 puglInitWorldInternals(void)

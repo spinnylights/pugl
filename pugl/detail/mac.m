@@ -1,5 +1,5 @@
 /*
-  Copyright 2012-2019 David Robillard <http://drobilla.net>
+  Copyright 2012-2020 David Robillard <http://drobilla.net>
   Copyright 2017 Hanspeter Portner <dev@open-music-kontrollers.ch>
 
   Permission to use, copy, modify, and/or distribute this software for any
@@ -683,6 +683,12 @@ handleCrossing(PuglWrapperView* view, NSEvent* event, const PuglEventType type)
 }
 
 @end
+
+PuglStatus
+puglInitApplication(PuglApplicationFlags PUGL_UNUSED(flags))
+{
+	return PUGL_SUCCESS;
+}
 
 PuglWorldInternals*
 puglInitWorldInternals(void)
