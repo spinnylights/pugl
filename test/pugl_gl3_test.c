@@ -118,10 +118,8 @@ onExpose(PuglView* view)
 		         time);
 	}
 
-	glBufferSubData(GL_ARRAY_BUFFER,
-	                0,
-	                app->numRects * sizeof(Rect),
-	                app->rects);
+	glBufferSubData(
+	        GL_ARRAY_BUFFER, 0, app->numRects * sizeof(Rect), app->rects);
 
 	glDrawElementsInstanced(
 	        GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_INT, NULL, app->numRects * 4);
