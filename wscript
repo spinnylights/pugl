@@ -19,6 +19,8 @@ VERSION = PUGL_VERSION  # Package version for waf dist
 top     = '.'           # Source directory
 out     = 'build'       # Build directory
 
+line_just = 47
+
 
 def options(ctx):
     ctx.load('compiler_c')
@@ -31,6 +33,7 @@ def options(ctx):
     ctx.add_flags(
         opts,
         {'all-headers': 'install complete header implementation',
+         'no-vulkan':   'do not build Vulkan support',
          'no-gl':       'do not build OpenGL support',
          'no-cairo':    'do not build Cairo support',
          'no-static':   'do not build static library',
@@ -70,6 +73,42 @@ def configure(conf):
         if Options.options.strict:
             append_cflags(['-Wunused-parameter', '-Wno-pedantic'])
 
+    sys_header = 'windows.h' if platform == 'win32' else ''
+
+    # Check for Windows Vulkan SDK (VULKAN_SDK is defined by the installer)
+    if not Options.options.no_vulkan:
+        vulkan_cflags    = ''
+        vulkan_linkflags = ''
+        if 'VULKAN_SDK' in os.environ:
+            sdk_path         = os.environ['VULKAN_SDK']
+            vulkan_cflags    = '-I' + os.path.join(sdk_path, 'Include')
+            vulkan_linkflags = '/LIBPATH:' + os.path.join(sdk_path, 'Lib')
+
+        # Check for Vulkan library (which has a different name on Windows (?))
+        if conf.check(features='c',
+                      cflags=vulkan_cflags,
+                      header_name=sys_header + ' vulkan/vulkan.h',
+                      uselib_store='VULKAN',
+                      mandatory=False):
+            for l in ['vulkan', 'vulkan-1']:
+                if conf.check(lib=l,
+                              uselib_store='VULKAN',
+                              cflags=vulkan_cflags,
+                              linkflags=vulkan_linkflags,
+                              mandatory=False):
+                    break
+
+        conf.check(features='cxx',
+                   cflags=vulkan_cflags,
+                   cxxflags=vulkan_cflags,
+                   header_name=sys_header + ' vulkan/vulkan.hpp',
+                   uselib_store='VULKANXX',
+                   mandatory=False)
+
+        if conf.env.HAVE_VULKAN:
+            conf.find_program('glslc', var='GLSLC')
+
+    conf.check_cc(lib='pthread', uselib_store='PTHREAD', mandatory=False)
     conf.check_cc(lib='m', uselib_store='M', mandatory=False)
     conf.check_cc(lib='dl', uselib_store='DL', mandatory=False)
 
@@ -229,6 +268,11 @@ def build(bld):
                           uselib=['GDI32', 'USER32', 'GL'],
                           source=['pugl/detail/win_gl.c'])
 
+        if bld.env.HAVE_VULKAN:
+            build_backend('win', 'vulkan',
+                          uselib=['GDI32', 'USER32'],
+                          source=['pugl/detail/win_vulkan.c'])
+
         if bld.env.HAVE_CAIRO:
             build_backend('win', 'cairo',
                           uselib=['CAIRO', 'GDI32', 'USER32'],
@@ -261,6 +305,11 @@ def build(bld):
             build_backend('x11', 'gl',
                           uselib=[glx_lib, 'X11'],
                           source=['pugl/detail/x11_gl.c'])
+
+        if bld.env.HAVE_VULKAN:
+            build_backend('x11', 'vulkan',
+                          uselib=['DL', 'X11'],
+                          source=['pugl/detail/x11_vulkan.c'])
 
         if bld.env.HAVE_CAIRO:
             build_backend('x11', 'cairo',
@@ -311,6 +360,22 @@ def build(bld):
             build_test('pugl_gl3_test',
                        ['test/pugl_gl3_test.c', 'test/glad/glad.c'],
                        platform, 'gl', uselib=['DL', 'GL', 'M'])
+
+        if bld.env.HAVE_VULKAN:
+            for s in ['rect.vert', 'rect.frag']:
+                bld(rule = bld.env.GLSLC[0] + " -O -o ${TGT} ${SRC}",
+                    source = 'shaders/%s' % s,
+                    target = 'shaders/%s.spv' % s)
+
+            build_test('pugl_vulkan_test',
+                       ['test/pugl_vulkan_test.c'],
+                       platform, 'vulkan', uselib=['M', 'VULKAN'])
+
+        if bld.env.HAVE_VULKANXX:
+            build_test('pugl_vulkan_cxx_test',
+                       ['test/pugl_vulkan_cxx_test.cpp'],
+                       platform, 'vulkan',
+                       uselib=['DL', 'M', 'PTHREAD', 'VULKANXX'])
 
         if bld.env.HAVE_CAIRO:
             build_test('pugl_cairo_test', ['test/pugl_cairo_test.c'],
