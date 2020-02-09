@@ -1,4 +1,4 @@
-#version 330 core
+#version 420 core
 
 /* The fragment shader uses the UV coordinates to calculate whether it is in
    the T, R, B, or L border.  These are then mixed with the border color, and
@@ -10,9 +10,9 @@
    specified precisely in pixels to draw sharp lines.  The border width is just
    hardcoded, but could be made a uniform or vertex attribute easily enough. */
 
-noperspective in vec2 f_uv;
-noperspective in vec2 f_size;
-noperspective in vec4 f_fillColor;
+layout(location = 0) noperspective in vec2 f_uv;
+layout(location = 1) noperspective in vec2 f_size;
+layout(location = 2) noperspective in vec4 f_fillColor;
 
 layout(location = 0) out vec4 FragColor;
 

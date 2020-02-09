@@ -1,18 +1,21 @@
-#version 330 core
+#version 420 core
 
 /* The vertex shader is trivial, but forwards scaled UV coordinates (in pixels)
    to the fragment shader for drawing the border. */
 
-uniform mat4 u_projection;
+layout(std140, binding = 0) uniform UniformBufferObject
+{
+	mat4 projection;
+} ubo;
 
 layout(location = 0) in vec2 v_position;
 layout(location = 1) in vec2 v_origin;
 layout(location = 2) in vec2 v_size;
 layout(location = 3) in vec4 v_fillColor;
 
-noperspective out vec2 f_uv;
-noperspective out vec2 f_size;
-noperspective out vec4 f_fillColor;
+layout(location = 0) noperspective out vec2 f_uv;
+layout(location = 1) noperspective out vec2 f_size;
+layout(location = 2) noperspective out vec4 f_fillColor;
 
 void
 main()
@@ -24,7 +27,7 @@ main()
 	              v_origin[0], v_origin[1], 0.0, 1.0);
 	// clang-format on
 
-	mat4 MVP = u_projection * m;
+	mat4 MVP = ubo.projection * m;
 
 	f_uv        = v_position * v_size;
 	f_size      = v_size;
